@@ -1,2 +1,19 @@
 ### list
 GET http://localhost:7888/configs/list?app=zst&namespace=default&environment=default
+
+### edit
+POST http://localhost:7888/configs/edit
+Content-Type: application/json
+
+{
+  "app": "zst",
+  "namespace": "default",
+  "environment": "default",
+  "configs": {
+    "key1": "value1",
+    "key2": "value2"
+  }
+}
+
+### delete
+DELETE http://localhost:7888/configs/delete?app=zst&namespace=default&environment=default&key=key1&key=ha

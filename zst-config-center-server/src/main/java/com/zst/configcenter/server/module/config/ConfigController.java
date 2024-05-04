@@ -1,9 +1,14 @@
 package com.zst.configcenter.server.module.config;
 
 import com.zst.configcenter.server.module.config.dto.ConfigDTO;
+import com.zst.configcenter.server.module.config.form.ConfigForm;
 import com.zst.configcenter.server.module.exception.DataNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,5 +31,18 @@ public class ConfigController {
         } else {
             throw new DataNotFoundException();
         }
+    }
+
+    @PostMapping("/edit")
+    public void edit(@RequestBody @Validated ConfigForm form) {
+        configService.insertOrUpdate(form);
+    }
+
+    @DeleteMapping("/delete")
+    public void delete(@RequestParam("app") String app,
+                       @RequestParam("namespace") String namespace,
+                       @RequestParam("environment") String environment,
+                       @RequestParam("key") List<String> key) {
+        configService.deleteByKey(app, namespace, environment, key);
     }
 }
