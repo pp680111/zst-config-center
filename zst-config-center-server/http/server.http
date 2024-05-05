@@ -10,8 +10,8 @@ Content-Type: application/json
   "namespace": "default",
   "environment": "default",
   "configs": {
-    "key1": "value1",
-    "key2": "value2"
+    "zst.aa": "a02",
+    "zst.bb": "b02"
   }
 }
 
