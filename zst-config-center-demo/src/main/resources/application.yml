@@ -1,0 +1,7 @@
+zst:
+  aa: a00
+  bb: b00
+  config:
+    server:
+      address: http://localhost:7888
+      app: zst
