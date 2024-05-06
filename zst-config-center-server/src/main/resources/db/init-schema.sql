@@ -7,3 +7,9 @@ CREATE TABLE IF NOT EXISTS `configs` (
     `config_val` varchar(500) NOT NULL,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `version` (
+    `key` VARCHAR(300) NOT NULL,
+    `version` BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

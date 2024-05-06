@@ -2,8 +2,10 @@ package com.zst.configcenter.server.module.config;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.zst.configcenter.server.module.config.form.ConfigForm;
+import com.zst.configcenter.server.module.version.VersionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -11,6 +13,8 @@ import java.util.List;
 public class ConfigService {
     @Autowired
     private ConfigMapper configMapper;
+    @Autowired
+    private VersionService versionService;
 
     public List<Config> list(String app, String namespace, String environment) {
         return configMapper.selectList(Wrappers.query(Config.class)
@@ -19,6 +23,7 @@ public class ConfigService {
                 .eq("environment", environment));
     }
 
+    @Transactional
     public void insertOrUpdate(ConfigForm form) {
         if (form == null || form.getConfigs() == null) {
             return;
@@ -46,6 +51,7 @@ public class ConfigService {
             } else {
                 configMapper.updateById(oldConfig);
             }
+            versionService.updateConfigVersion(form.getApp(), form.getNamespace(), form.getEnvironment());
         });
     }
 

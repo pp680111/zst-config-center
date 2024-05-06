@@ -3,6 +3,7 @@ package com.zst.configcenter.server.module.config;
 import com.zst.configcenter.server.module.config.dto.ConfigDTO;
 import com.zst.configcenter.server.module.config.form.ConfigForm;
 import com.zst.configcenter.server.module.exception.DataNotFoundException;
+import com.zst.configcenter.server.module.version.VersionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,6 +21,8 @@ import java.util.List;
 public class ConfigController {
     @Autowired
     private ConfigService configService;
+    @Autowired
+    private VersionService versionService;
 
     @GetMapping("/list")
     public List<ConfigDTO> list(@RequestParam("app") String app,
@@ -44,5 +47,12 @@ public class ConfigController {
                        @RequestParam("environment") String environment,
                        @RequestParam("key") List<String> key) {
         configService.deleteByKey(app, namespace, environment, key);
+    }
+
+    @GetMapping("/version")
+    public int updateConfigVersion(@RequestParam("app") String app,
+                                    @RequestParam("namespace") String namespace,
+                                    @RequestParam("environment") String environment) {
+        return versionService.getConfigVersion(app, namespace, environment);
     }
 }

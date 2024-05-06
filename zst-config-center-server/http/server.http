@@ -17,3 +17,6 @@ Content-Type: application/json
 
 ### delete
 DELETE http://localhost:7888/configs/delete?app=zst&namespace=default&environment=default&key=key1&key=ha
+
+### version
+GET http://localhost:7888/configs/version?app=zst&namespace=default&environment=default
