@@ -1,14 +1,18 @@
 package com.zst.configcenter.server.module.version;
 
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.MessageFormat;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 @Service
 public class VersionService {
+    private static final int DEFAULT_POLLING_DURATION_MS = 30 * 1000;
+
+    private final Map<String, Semaphore> pollingSemaphoreMap = new ConcurrentHashMap<>();
     @Autowired
     private VersionMapper versionMapper;
 
@@ -30,5 +34,15 @@ public class VersionService {
 
     private String buildVersionKey(String app, String namespace, String environment) {
         return MessageFormat.format("{0}_{1}_{2}", app, namespace, environment);
+    }
+
+    private Semaphore getPollingSemaphore(String key) {
+        if (!pollingSemaphoreMap.containsKey(key)) {
+            synchronized (this) {
+                if (!pollingSemaphoreMap.containsKey(key)) {
+                    pollingSemaphoreMap.put(key, new Semaphore());
+                }
+            }
+        }
     }
 }
