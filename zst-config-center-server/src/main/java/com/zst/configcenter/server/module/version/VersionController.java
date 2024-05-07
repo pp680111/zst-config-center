@@ -12,10 +12,11 @@ public class VersionController {
     @Autowired
     private VersionService versionService;
 
-    @GetMapping("/version")
+    @GetMapping("/getVersion")
     public int updateConfigVersion(@RequestParam("app") String app,
                                    @RequestParam("namespace") String namespace,
-                                   @RequestParam("environment") String environment) {
-        return versionService.getConfigVersion(app, namespace, environment);
+                                   @RequestParam("environment") String environment,
+                                   @RequestParam(value = "clientVersion", required = false) Integer clientVersion) {
+        return versionService.getConfigVersion(app, namespace, environment, clientVersion);
     }
 }
