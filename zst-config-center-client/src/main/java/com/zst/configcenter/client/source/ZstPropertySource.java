@@ -1,4 +1,4 @@
-package com.zst.configcenter.client.registrar;
+package com.zst.configcenter.client.source;
 
 import com.zst.configcenter.client.remote.ZstConfigService;
 import org.springframework.core.env.EnumerablePropertySource;

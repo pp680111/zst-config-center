@@ -1,5 +1,6 @@
 package com.zst.configcenter.client.registrar;
 
+import com.zst.configcenter.client.processor.PropertySourcesProcessor;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;

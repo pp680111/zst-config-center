@@ -1,5 +1,6 @@
-package com.zst.configcenter.client.registrar;
+package com.zst.configcenter.client.processor;
 
+import com.zst.configcenter.client.source.ZstPropertySource;
 import com.zst.configcenter.client.remote.ZstConfigService;
 import com.zst.configcenter.client.remote.ZstConfigServiceFactory;
 import org.springframework.beans.BeansException;
