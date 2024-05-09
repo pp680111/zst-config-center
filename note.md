@@ -11,6 +11,7 @@ TODO:
   1. 在BeanPostProcessor中扫表所有的Bean中使用了@Value的字段，保存其Metadata
   2. 实现对相关字段的数值的注入
   3. 基于config-server的version，实现监听服务端配置版本更新，在监听到变更事件时刷新所有@Value属性的字段值
+  > 对@Value注解的处理，基本上与apollo的SpringValueProcessor差不多
 * 监听到config-server数据变更的时候，刷新注册成Bean的配置对象的值
 
 在Spring中注入配置属性的流程
