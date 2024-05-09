@@ -12,7 +12,7 @@ TODO:
   2. 实现对相关字段的数值的注入
   3. 基于config-server的version，实现监听服务端配置版本更新，在监听到变更事件时刷新所有@Value属性的字段值
   > 对@Value注解的处理，基本上与apollo的SpringValueProcessor差不多
-* 监听到config-server数据变更的时候，刷新注册成Bean的配置对象的值
+* 监听到config-server数据变更的时候，刷新注册成Bean的配置对象的值(对于@Value，可以尝试用ApplicationListener)
 
 在Spring中注入配置属性的流程
 1. 编写一个自定义PropertySource，该PropertySource负责从配置中心中获取配置属性
