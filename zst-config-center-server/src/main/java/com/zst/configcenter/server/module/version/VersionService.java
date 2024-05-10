@@ -8,7 +8,6 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -70,7 +69,8 @@ public class VersionService {
             // 如果正常等待并且被唤醒的话，就返回重新查询的版本号
             LinkedTransferQueue pollingQueue = getPollingQueue(buildVersionKey(app, namespace, environment));
             pollingQueue.tryTransfer(new Object(), DEFAULT_POLLING_DURATION_MS, TimeUnit.MILLISECONDS);
-            return versionCacheMap.get(buildVersionKey(app, namespace, environment));
+            Integer afterPollingWaitVersion = versionCacheMap.get(buildVersionKey(app, namespace, environment));
+            return afterPollingWaitVersion == null ? serverVersion : afterPollingWaitVersion;
         } catch (Exception e) {
             log.error("getConfigVersion error", e);
         }
