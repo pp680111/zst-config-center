@@ -33,8 +33,23 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class HttpInvoker {
-    private static final int TIMEOUT_MS = 4000;
+    private static final int TIMEOUT_MS = 35000;
     private CloseableHttpAsyncClient httpAsyncClient = null;
+
+    /**
+     * 判断HTTP响应状态是否正常
+     * @param response
+     * @return
+     */
+    public boolean ifResponseStatusOk(HttpResponse response) {
+        int statusCode = response.getStatusLine().getStatusCode();
+        /*
+         1xx响应码正常不会返回
+         3xx响应码因为开启了重定向的处理，因此正常情况下httpClient不会返回3xx的响应，如果有的话也可以认为是发生了错误
+         4xx和5xx则是常规错误
+         */
+        return statusCode >= 200 && statusCode < 300;
+    }
 
     public CompletableFuture<HttpResponse> doGet(String url, Map<String, String> header, Map<String, String> params) {
         HttpGet req = null;
@@ -154,6 +169,8 @@ public class HttpInvoker {
                 RequestConfig requestConfig = RequestConfig.custom()
                         .setConnectTimeout(TIMEOUT_MS)
                         .setSocketTimeout(TIMEOUT_MS)
+                        .setRedirectsEnabled(true)
+                        .setCircularRedirectsAllowed(false)
                         .build();
 
                 CloseableHttpAsyncClient newClient = HttpAsyncClients.custom()

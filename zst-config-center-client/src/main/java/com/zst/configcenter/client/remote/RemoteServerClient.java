@@ -9,6 +9,7 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -44,8 +45,48 @@ public class RemoteServerClient {
             Future<HttpResponse> responseFuture = httpInvoker.doGet(url, null, urlParams);
             HttpResponse response = responseFuture.get();
 
+            if (!httpInvoker.ifResponseStatusOk(response)) {
+                throw new RuntimeException(MessageFormat.format("HTTP响应错误，code={0}",
+                        response.getStatusLine().getStatusCode()));
+            }
+
             String rawBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             return JSONArray.parseArray(rawBody, ConfigDTO.class);
+        } catch (Exception e) {
+            throw new RuntimeException("调用Config Server接口时发生错误", e);
+        }
+    }
+
+    /**
+     * 查询指定类型配置数据的最新版本号
+     * @param app
+     * @param namespace
+     * @param environment
+     * @param currentVersion
+     * @return
+     */
+    public int version(String app, String namespace, String environment, int currentVersion) {
+        if (!StringUtils.hasLength(app) || !StringUtils.hasLength(namespace)
+                || !StringUtils.hasLength(environment)) {
+            throw new IllegalArgumentException();
+        }
+
+        String url = String.format("%s/version/getVersion", configServerProperties.getAddress());
+        Map<String, String> urlParams = Map.of("app", app,
+                "namespace", namespace,
+                "environment", environment,
+                "clientVersion", String.valueOf(currentVersion));
+        try {
+            Future<HttpResponse> responseFuture = httpInvoker.doGet(url, null, urlParams);
+            HttpResponse response = responseFuture.get();
+
+            if (!httpInvoker.ifResponseStatusOk(response)) {
+                throw new RuntimeException(MessageFormat.format("HTTP响应错误，code={0}",
+                        response.getStatusLine().getStatusCode()));
+            }
+
+            String rawBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+            return Integer.parseInt(rawBody);
         } catch (Exception e) {
             throw new RuntimeException("调用Config Server接口时发生错误", e);
         }

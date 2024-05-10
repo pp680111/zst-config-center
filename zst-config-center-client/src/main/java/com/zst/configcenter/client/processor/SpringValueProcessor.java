@@ -18,9 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * 负责处理@Value注解形式的配置属性注入
- * 1，扫描所有的@Value注解，保存metadata
- * 2，在配置变更时，更新所有的@Value注解对应的字段的值
+ * 扫描所有Bean中的@Value注解，记录Metadata，用于后续配置值的更新
  */
 public class SpringValueProcessor implements BeanPostProcessor, BeanFactoryAware {
     private final PlaceholderHelper placeholderHelper = new PlaceholderHelper();

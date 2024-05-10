@@ -4,6 +4,7 @@ import com.zst.configcenter.client.properties.ConfigServerProperties;
 import com.zst.configcenter.client.remote.dto.ConfigDTO;
 import lombok.extern.slf4j.Slf4j;
 
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ public class ZstConfigServiceImpl implements ZstConfigService {
 
     private ReentrantLock configLock = new ReentrantLock();
     private Map<String, String> configs;
+    private int version = 0;
 
     private ConfigServerProperties configServerProperties;
     private RemoteServerClient remoteServerClient;
@@ -28,6 +30,7 @@ public class ZstConfigServiceImpl implements ZstConfigService {
         this.configServerProperties = configServerProperties;
         this.remoteServerClient = new RemoteServerClient(configServerProperties);
     }
+
     @Override
     public String[] getPropertyNames() {
         if (configs == null) {
@@ -66,11 +69,17 @@ public class ZstConfigServiceImpl implements ZstConfigService {
                 return;
             }
 
+            int newVersion = remoteServerClient.version(configServerProperties.getApp(), configServerProperties.getNamespace(),
+                    configServerProperties.getEnvironment(), this.version);
+
             Map<String, String> newConfigMap = new HashMap<>();
             configDTOs.forEach(configDTO -> {
                 newConfigMap.put(configDTO.getKey(), configDTO.getVal());
             });
             this.configs = newConfigMap;
+            this.version = newVersion;
+
+            log.info(MessageFormat.format("refresh config from remote server done, current version = {0}", version));
         } catch (Exception e) {
             log.error("refresh config error", e);
         } finally {
