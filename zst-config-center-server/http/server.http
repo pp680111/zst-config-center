@@ -11,7 +11,8 @@ Content-Type: application/json
   "environment": "default",
   "configs": {
     "zst.aa": "a02",
-    "zst.bb": "b02"
+    "zst.bb": "b02",
+    "zst.cc": "c02"
   }
 }
 
