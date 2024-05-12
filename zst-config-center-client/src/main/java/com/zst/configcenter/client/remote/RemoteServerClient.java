@@ -1,15 +1,18 @@
 package com.zst.configcenter.client.remote;
 
+import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.zst.configcenter.client.properties.ConfigServerProperties;
 import com.zst.configcenter.client.remote.dto.ConfigDTO;
 import com.zst.configcenter.client.utils.HttpInvoker;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -17,6 +20,7 @@ import java.util.concurrent.Future;
 /**
  * 负责执行调用server端接口的类
  */
+@Slf4j
 public class RemoteServerClient {
     private HttpInvoker httpInvoker;
     private ConfigServerProperties configServerProperties;
@@ -40,6 +44,8 @@ public class RemoteServerClient {
         Map<String, String> urlParams = Map.of("app", app,
                 "namespace", namespace,
                 "environment", environment);
+
+        log.debug(MessageFormat.format("invoke url = {0}, params = {1}", url, JSON.toJSONString(urlParams)));
 
         try {
             Future<HttpResponse> responseFuture = httpInvoker.doGet(url, null, urlParams);
@@ -65,17 +71,23 @@ public class RemoteServerClient {
      * @param currentVersion
      * @return
      */
-    public int version(String app, String namespace, String environment, int currentVersion) {
+    public int version(String app, String namespace, String environment, Integer currentVersion) {
         if (!StringUtils.hasLength(app) || !StringUtils.hasLength(namespace)
                 || !StringUtils.hasLength(environment)) {
             throw new IllegalArgumentException();
         }
 
         String url = String.format("%s/version/getVersion", configServerProperties.getAddress());
-        Map<String, String> urlParams = Map.of("app", app,
-                "namespace", namespace,
-                "environment", environment,
-                "clientVersion", String.valueOf(currentVersion));
+        Map<String, String> urlParams = new HashMap<>();
+        urlParams.put("app", app);
+        urlParams.put("namespace", namespace);
+        urlParams.put("environment", environment);
+        if (currentVersion != null) {
+            urlParams.put("clientVersion", currentVersion.toString());
+        }
+
+        log.debug(MessageFormat.format("invoke url = {0}, params = {1}", url, JSON.toJSONString(urlParams)));
+
         try {
             Future<HttpResponse> responseFuture = httpInvoker.doGet(url, null, urlParams);
             HttpResponse response = responseFuture.get();

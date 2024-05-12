@@ -2,20 +2,21 @@ FINISH:
 * 实现client端向server端获取配置属性数据的逻辑
 * 在变更配置值时记录版本更新，以便实现增量查询
 * 长轮询模式
+* 实现注入到@Value注解修饰的字段
+  1. 在BeanPostProcessor中扫表所有的Bean中使用了@Value的字段，保存其Metadata
+  2. 实现对相关字段的数值的注入
+  3. 基于config-server的version，实现监听服务端配置版本更新，在监听到变更事件时刷新所有@Value属性的字段值
+
 
 TODO:
 * 思考一下怎么实现配置中心的历史版本
 * 更新配置值的时候的并发问题的处理，要考虑一下
 * 试一下事件视图的数据结构来处理配置数据的存储
-* 实现注入到@Value注解修饰的字段
-  1. 在BeanPostProcessor中扫表所有的Bean中使用了@Value的字段，保存其Metadata
-  2. 实现对相关字段的数值的注入
-  3. 基于config-server的version，实现监听服务端配置版本更新，在监听到变更事件时刷新所有@Value属性的字段值
-  > 对@Value注解的处理，基本上与apollo的SpringValueProcessor差不多
-* 监听到config-server数据变更的时候，刷新注册成Bean的配置对象的值(对于@Value，可以尝试用ApplicationListener)
 * 监听到config-server数据变更的时候，刷新注册成Bean的配置对象的值
-  * 可以往回翻翻之前rpc集成apollo的时候，讲的apollo怎么更新配置属性的内容，做下笔记
-  * 用发布EnvironmentChangeEvent的形式来通知spring上下文从propertysource中刷新配置属性值（仅对使用ConfigurationProperties的配置生效，该event来自于spring-cloud-context库）
+  * 可以往回翻翻之前rpc集成apollo的时候，讲的apollo怎么更新配置属性的内容，做下笔记 
+  * 用发布EnvironmentChangeEvent的形式来通知spring上下文从propertysource中刷新配置属性值（仅对使用ConfigurationProperties的配置生效，该event来自于spring-cloud-context库）(ok)
+  * 研究下spring-cloud-context的EnvironmentChangeEvent相关刷新的代码
+* 优化下长轮询模式的代码实现方式（注意考虑到事务可见性的问题）
 
 
 
@@ -34,3 +35,5 @@ private String name; // name="my.name"
 然后从Environment中获取此key对应的配置值来替换掉`${xxx}`这一部分，即`@Value("${my.name}")`等同于`@Value("zst")`
 
 SpringValueProcessor，本质上是吧@Value中的属性key提取并记录，然后再监听到服务端配置变更时，根据变更的key来找到对应的placeholder，刷新对应的值
+
+apollo的客户端中，只实现了对@Value进行刷新，对于ConfigurationProperties的属性，则依靠spring-cloud-context库的EnvironmentChangeEvent来刷新，所以还是需要引入这个
