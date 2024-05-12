@@ -6,3 +6,6 @@ zst:
     server:
       address: http://localhost:7888
       app: zst
+
+server:
+  port: 5454
