@@ -4,6 +4,7 @@ import com.zst.configcenter.server.module.config.dto.ConfigDTO;
 import com.zst.configcenter.server.module.config.form.ConfigForm;
 import com.zst.configcenter.server.module.exception.DataNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,8 @@ import java.util.List;
 public class ConfigController {
     @Autowired
     private ConfigService configService;
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @GetMapping("/list")
     public List<ConfigDTO> list(@RequestParam("app") String app,
@@ -36,6 +39,7 @@ public class ConfigController {
     @PostMapping("/edit")
     public void edit(@RequestBody @Validated ConfigForm form) {
         configService.insertOrUpdate(form);
+        applicationContext.publishEvent(new ConfigUpdateEvent(this, form.getApp(), form.getNamespace(), form.getEnvironment()));
     }
 
     @DeleteMapping("/delete")

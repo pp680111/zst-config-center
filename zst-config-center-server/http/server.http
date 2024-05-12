@@ -10,9 +10,9 @@ Content-Type: application/json
   "namespace": "default",
   "environment": "default",
   "configs": {
-    "zst.aa": "a02",
-    "zst.bb": "b02",
-    "zst.cc": "c02"
+    "zst.aa": "a11",
+    "zst.bb": "b25",
+    "zst.cc": "c03"
   }
 }
 
@@ -20,4 +20,4 @@ Content-Type: application/json
 DELETE http://localhost:7888/configs/delete?app=zst&namespace=default&environment=default&key=key1&key=ha
 
 ### version
-GET http://localhost:7888/version/getVersion?app=zst&namespace=default&environment=default&clientVersion=0
+GET http://localhost:7888/version/getVersion?app=zst&namespace=default&environment=default&clientVersion=8

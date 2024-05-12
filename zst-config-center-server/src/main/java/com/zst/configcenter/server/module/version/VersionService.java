@@ -5,22 +5,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
 public class VersionService {
-    private static final int DEFAULT_POLLING_DURATION_MS = 30 * 1000;
-
-    private final Map<String, LinkedTransferQueue> pollingLockMap = new HashMap<>();
-    private final Map<String, Integer> versionCacheMap = new ConcurrentHashMap<>();
-
     @Autowired
     private VersionMapper versionMapper;
+    @Autowired
+    private VersionUpdateNotifier versionUpdateNotifier;
 
     /**
      * 更新指定环境的配置版本号
@@ -29,10 +21,12 @@ public class VersionService {
      * @param environment
      */
     public void updateConfigVersion(String app, String namespace, String environment) {
-        String versionId = buildVersionKey(app, namespace, environment);
+        String versionId = Version.buildVersionKey(app, namespace, environment);
         versionMapper.updateVersion(versionId);
-        versionCacheMap.put(versionId, getConfigVersion(app, namespace, environment));
-        notifyPollingCounter(buildVersionKey(app, namespace, environment));
+        /*
+            当事务更新配置的事务尚未提交时，唤醒了等待中的长轮询，会导致客户端立刻发起查询配置文件的请求，而此时事务在数据库中又还没提交，
+            导致即使查询到版本号更新了，再次发起的配置查询请求读取到的还是就数据
+         */
     }
 
     /**
@@ -43,7 +37,7 @@ public class VersionService {
      * @return
      */
     public Integer getConfigVersion(String app, String namespace, String environment) {
-        Version result =  versionMapper.selectByKey(buildVersionKey(app, namespace, environment));
+        Version result =  versionMapper.selectByKey(Version.buildVersionKey(app, namespace, environment));
         return result == null ? 0 : result.getVersion();
     }
 
@@ -56,7 +50,9 @@ public class VersionService {
      * @return
      */
     public Integer getConfigVersion(String app, String namespace, String environment, Integer clientVersion) {
-        Integer serverVersion = getConfigVersion(app, namespace, environment);
+        Integer serverVersion = queryVersion(app, namespace, environment);
+        log.debug(MessageFormat.format("handling client request,clientVersion={0} serverVersion: {1}", clientVersion, serverVersion));
+
         if (clientVersion == null) {
             return serverVersion;
         }
@@ -67,10 +63,8 @@ public class VersionService {
 
         try {
             // 如果正常等待并且被唤醒的话，就返回重新查询的版本号
-            LinkedTransferQueue pollingQueue = getPollingQueue(buildVersionKey(app, namespace, environment));
-            pollingQueue.tryTransfer(new Object(), DEFAULT_POLLING_DURATION_MS, TimeUnit.MILLISECONDS);
-            Integer afterPollingWaitVersion = versionCacheMap.get(buildVersionKey(app, namespace, environment));
-            return afterPollingWaitVersion == null ? serverVersion : afterPollingWaitVersion;
+            versionUpdateNotifier.waitForUpdate(Version.buildVersionKey(app, namespace, environment));
+            return queryVersion(app, namespace, environment);
         } catch (Exception e) {
             log.error("getConfigVersion error", e);
         }
@@ -78,28 +72,18 @@ public class VersionService {
         return serverVersion;
     }
 
-    private String buildVersionKey(String app, String namespace, String environment) {
-        return MessageFormat.format("{0}_{1}_{2}", app, namespace, environment);
-    }
-
-    private LinkedTransferQueue getPollingQueue(String key) {
-        if (!pollingLockMap.containsKey(key)) {
-            synchronized (this) {
-                if (!pollingLockMap.containsKey(key)) {
-                    pollingLockMap.put(key, new LinkedTransferQueue());
-                }
-            }
-        }
-
-        return pollingLockMap.get(key);
-    }
-
-    private void notifyPollingCounter(String key) {
-        try {
-            LinkedTransferQueue pollingQueue = getPollingQueue(key);
-            pollingQueue.clear();
-        } catch (Exception e) {
-            log.error("notifyPollingCounter error", e);
-        }
+    /**
+     * 查询当前指定配置key的版本
+     *
+     * 先从缓存中查询，如果缓存中尚不存在的话，再从数据库中查询
+     * @param app
+     * @param namespace
+     * @param environment
+     * @return
+     */
+    private Integer queryVersion(String app, String namespace, String environment) {
+        String key = Version.buildVersionKey(app, namespace, environment);
+        Version versionEntity = versionMapper.selectByKey(key);
+        return versionEntity == null ? 0 : versionEntity.getVersion();
     }
 }
