@@ -6,7 +6,7 @@ FINISH:
   1. 在BeanPostProcessor中扫表所有的Bean中使用了@Value的字段，保存其Metadata
   2. 实现对相关字段的数值的注入
   3. 基于config-server的version，实现监听服务端配置版本更新，在监听到变更事件时刷新所有@Value属性的字段值
-
+* 集成到到rpc项目中
 
 TODO:
 * 思考一下怎么实现配置中心的历史版本
@@ -17,7 +17,7 @@ TODO:
   * 用发布EnvironmentChangeEvent的形式来通知spring上下文从propertysource中刷新配置属性值（仅对使用ConfigurationProperties的配置生效，该event来自于spring-cloud-context库）(ok)
   * 研究下spring-cloud-context的EnvironmentChangeEvent相关刷新的代码
 * 优化下长轮询模式的代码实现方式（注意考虑到事务可见性的问题）
-* 集成到到rpc项目中
+
 * 对于那些不能更改的配置（比如客户端中指定的app、namespace、environment等，client不能吧这些值给覆盖掉）
 * server端可以添加配置数据缓存机制，提升响应速度
 * client可以在本地加一个临时文件记录上一次拉取的配置数据，在下一次启动时如果配置中心不可用的时候，且开启了允许读取临时文件数据的开关，那么可以先用这部分临时的配置信息来启动，提高服务的可用性
