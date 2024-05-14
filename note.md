@@ -17,6 +17,8 @@ TODO:
   * 用发布EnvironmentChangeEvent的形式来通知spring上下文从propertysource中刷新配置属性值（仅对使用ConfigurationProperties的配置生效，该event来自于spring-cloud-context库）(ok)
   * 研究下spring-cloud-context的EnvironmentChangeEvent相关刷新的代码
 * 优化下长轮询模式的代码实现方式（注意考虑到事务可见性的问题）
+* 集成到到rpc项目中
+* 对于那些不能更改的配置（比如客户端中指定的app、namespace、environment等，client不能吧这些值给覆盖掉）
 
 
 
