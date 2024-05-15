@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zst.configcenter.server.module.clusterlock.ClusterLockMapper">
+    <update id="tryOccupyLock">
+<![CDATA[
+        UPDATE `cluster_lock` SET instance_id = #{instanceId} AND timeout = #{timeout}
+        WHERE (`timeout` <= NOW() OR `instance_id` = #{instanceId}) AND id = 0;
+]]>
+    </update>
+</mapper>
