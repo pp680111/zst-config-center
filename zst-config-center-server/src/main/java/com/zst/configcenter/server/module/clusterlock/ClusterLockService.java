@@ -43,7 +43,7 @@ public class ClusterLockService {
             String nextTimeout = LocalDateTime.now().plusSeconds(LOCK_TIMEOUT).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             int updatedRow = clusterLockMapper.tryOccupyLock(INSTANCE_ID, nextTimeout);
             hasLock = updatedRow > 0;
-            log.info(MessageFormat.format("instance {0} get lock result = ", INSTANCE_ID, hasLock));
+            log.info(MessageFormat.format("instance {0} get lock result = {1}", INSTANCE_ID, hasLock ? "true" : "false"));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }

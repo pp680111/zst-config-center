@@ -6,7 +6,7 @@
 <mapper namespace="com.zst.configcenter.server.module.clusterlock.ClusterLockMapper">
     <update id="tryOccupyLock">
 <![CDATA[
-        UPDATE `cluster_lock` SET instance_id = #{instanceId} AND timeout = #{timeout}
+        UPDATE `cluster_lock` SET instance_id = #{instanceId}, timeout = #{timeout}
         WHERE (`timeout` <= NOW() OR `instance_id` = #{instanceId}) AND id = 0;
 ]]>
     </update>
