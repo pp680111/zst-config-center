@@ -1,18 +1,19 @@
 ### list
-GET http://localhost:7888/configs/list?app=zst&namespace=default&environment=default
+GET http://localhost:7888/configs/list?app=rpc-01&namespace=default&environment=default
 
 ### edit
 POST http://localhost:7888/configs/edit
 Content-Type: application/json
 
 {
-  "app": "zst",
+  "app": "rpc-01",
   "namespace": "default",
   "environment": "default",
   "configs": {
-    "zst.aa": "a11",
-    "zst.bb": "b25",
-    "zst.cc": "c03"
+    "rpc.registry.instance-id": "provider1",
+    "rpc.registry.instance-ip": "127.0.0.1",
+    "rpc.filter.cache.enable": false,
+    "registry.customrc.addresses": "http://192.168.123.249:8444,http://192.168.123.249:8445"
   }
 }
 
