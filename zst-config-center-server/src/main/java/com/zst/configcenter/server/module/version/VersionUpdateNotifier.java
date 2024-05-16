@@ -6,17 +6,18 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
 public class VersionUpdateNotifier implements ApplicationListener<ConfigUpdateEvent> {
     private static final int DEFAULT_POLLING_DURATION_MS = 30 * 1000;
 
-    private final Map<String, LinkedTransferQueue> pollingLockMap = new HashMap<>();
+    private final Map<String, List<CompletableFuture<Integer>>> pollingFutureMap = new ConcurrentHashMap<>();
 
     @Override
     public void onApplicationEvent(ConfigUpdateEvent event) {
@@ -25,44 +26,36 @@ public class VersionUpdateNotifier implements ApplicationListener<ConfigUpdateEv
         }
 
         String key = Version.buildVersionKey(event.getApp(), event.getNamespace(), event.getEnvironment());
-        notifyPollingCounter(key);
+        notifyPollingCounter(key, event.getVersion());
     }
 
-    public void waitForUpdate(String key) {
-        try {
-            LinkedTransferQueue pollingQueue = getPollingQueue(key);
-            pollingQueue.tryTransfer(new Object(), DEFAULT_POLLING_DURATION_MS, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            log.error("error when waiting for version update");
-        }
-    }
+    public CompletableFuture<Integer> requestVersionUpdateFuture(String key) {
+        CompletableFuture<Integer> future = new CompletableFuture<>();
+        pollingFutureMap.computeIfAbsent(key, k -> new ArrayList<>()).add(future);
 
-    /**
-     * 获取用于执行等待的阻塞队列对象
-     * @param key
-     * @return
-     */
-    private LinkedTransferQueue getPollingQueue(String key) {
-        if (!pollingLockMap.containsKey(key)) {
-            synchronized (this) {
-                if (!pollingLockMap.containsKey(key)) {
-                    pollingLockMap.put(key, new LinkedTransferQueue());
-                }
+        future.thenApply(version -> {
+            List<CompletableFuture<Integer>> futures = pollingFutureMap.get(key);
+            if (futures == null) {
+                log.error("cancelling version update future for key {} failed, cannot find pollingQueue");
+                return version;
             }
-        }
 
-        return pollingLockMap.get(key);
+            futures.remove(future);
+            return version;
+        });
+        return future;
     }
 
     /**
      * 唤醒等待者
      * @param key
      */
-    private void notifyPollingCounter(String key) {
+    private void notifyPollingCounter(String key, Integer version) {
         try {
-            // 通过清空阻塞队列的元素的方式，来唤醒所有等待阻塞队列的线程
-            LinkedTransferQueue pollingQueue = getPollingQueue(key);
-            pollingQueue.clear();
+            List<CompletableFuture<Integer>> pollingFutures = this.pollingFutureMap.get(key);
+            if (pollingFutures != null) {
+                pollingFutures.forEach(future -> future.complete(version));
+            }
         } catch (Exception e) {
             log.error("notifyPollingCounter error", e);
         }

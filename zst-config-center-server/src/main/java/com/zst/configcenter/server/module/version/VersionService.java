@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.MessageFormat;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -42,34 +43,30 @@ public class VersionService {
     }
 
     /**
-     * 获取指定配置的版本号，在未找到更高的版本号之前执行等待
+     * 获取指定配置的版本号
      * @param app
      * @param namespace
      * @param environment
      * @param clientVersion
      * @return
      */
-    public Integer getConfigVersion(String app, String namespace, String environment, Integer clientVersion) {
+    public CompletableFuture<Integer> getConfigVersion(String app, String namespace, String environment, Integer clientVersion) {
+        CompletableFuture<Integer> result = new CompletableFuture<>();
+
         Integer serverVersion = queryVersion(app, namespace, environment);
         log.debug(MessageFormat.format("handling client request,clientVersion={0} serverVersion: {1}", clientVersion, serverVersion));
 
-        if (clientVersion == null) {
-            return serverVersion;
-        }
-
-        if (clientVersion < serverVersion) {
-            return serverVersion;
+        if (clientVersion == null || clientVersion < serverVersion) {
+            result.complete(serverVersion);
+            return result;
         }
 
         try {
             // 如果正常等待并且被唤醒的话，就返回重新查询的版本号
-            versionUpdateNotifier.waitForUpdate(Version.buildVersionKey(app, namespace, environment));
-            return queryVersion(app, namespace, environment);
+            return versionUpdateNotifier.requestVersionUpdateFuture(Version.buildVersionKey(app, namespace, environment));
         } catch (Exception e) {
-            log.error("getConfigVersion error", e);
+            throw new RuntimeException(e);
         }
-        // 默认情况返回之前查询的服务器版本号
-        return serverVersion;
     }
 
     /**
