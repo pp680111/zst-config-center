@@ -1,6 +1,7 @@
 package com.zst.configcenter.server.module.version;
 
 import com.zst.configcenter.server.module.config.ConfigUpdateEvent;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Component
@@ -18,6 +23,13 @@ public class VersionUpdateNotifier implements ApplicationListener<ConfigUpdateEv
     private static final int DEFAULT_POLLING_DURATION_MS = 30 * 1000;
 
     private final Map<String, List<CompletableFuture<Integer>>> pollingFutureMap = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService pollingFutureCleaner = Executors.newSingleThreadScheduledExecutor();
+
+    @PostConstruct
+    public void postConstruct() {
+        pollingFutureCleaner.scheduleAtFixedRate(this::handleExpiredPollingFuture, 0,
+                DEFAULT_POLLING_DURATION_MS, TimeUnit.MILLISECONDS);
+    }
 
     @Override
     public void onApplicationEvent(ConfigUpdateEvent event) {
@@ -56,9 +68,20 @@ public class VersionUpdateNotifier implements ApplicationListener<ConfigUpdateEv
             if (pollingFutures != null) {
                 pollingFutures.forEach(future -> future.complete(version));
             }
+            pollingFutureMap.remove(key);
         } catch (Exception e) {
             log.error("notifyPollingCounter error", e);
         }
     }
 
+    private void handleExpiredPollingFuture() {
+        pollingFutureMap.forEach((key, futures) -> {
+            futures.forEach(future -> {
+                if (!future.isDone()) {
+                    future.completeExceptionally(new TimeoutException());
+                }
+            });
+        });
+        pollingFutureMap.clear();
+    }
 }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.MessageFormat;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Service
@@ -63,7 +64,9 @@ public class VersionService {
 
         try {
             // 如果正常等待并且被唤醒的话，就返回重新查询的版本号
-            return versionUpdateNotifier.requestVersionUpdateFuture(Version.buildVersionKey(app, namespace, environment));
+            CompletableFuture<Integer> pollingFuture = versionUpdateNotifier.requestVersionUpdateFuture(Version.buildVersionKey(app, namespace, environment));
+            // 如果等待过程出现任何异常的话，那么返回现有的版本号
+            return pollingFuture.exceptionally(e -> serverVersion);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
