@@ -8,20 +8,19 @@ FINISH:
   3. 基于config-server的version，实现监听服务端配置版本更新，在监听到变更事件时刷新所有@Value属性的字段值
 * 集成到到rpc项目中
 * 优化下长轮询模式的代码(用DefferedResult来优化长轮询实现，测试一下defferedResult的线程使用情况)
+* 监听到config-server数据变更的时候，刷新注册成Bean的配置对象的值
+  * 可以往回翻翻之前rpc集成apollo的时候，讲的apollo怎么更新配置属性的内容，做下笔记
+  * 用发布EnvironmentChangeEvent的形式来通知spring上下文从propertysource中刷新配置属性值（仅对使用ConfigurationProperties的配置生效，该event来自于spring-cloud-context库）(ok)
+  * 研究下spring-cloud-context的EnvironmentChangeEvent相关刷新的代码（ok）
 
 
 TODO:
 * 思考一下怎么实现配置中心的历史版本
 * 更新配置值的时候的并发问题的处理，要考虑一下
 * 试一下事件视图的数据结构来处理配置数据的存储
-* 监听到config-server数据变更的时候，刷新注册成Bean的配置对象的值
-  * 可以往回翻翻之前rpc集成apollo的时候，讲的apollo怎么更新配置属性的内容，做下笔记 
-  * 用发布EnvironmentChangeEvent的形式来通知spring上下文从propertysource中刷新配置属性值（仅对使用ConfigurationProperties的配置生效，该event来自于spring-cloud-context库）(ok)
-  * 研究下spring-cloud-context的EnvironmentChangeEvent相关刷新的代码
 * 对于那些不能更改的配置（比如客户端中指定的app、namespace、environment等，client不能吧这些值给覆盖掉）
 * server端可以添加配置数据缓存机制，提升响应速度
 * client可以在本地加一个临时文件记录上一次拉取的配置数据，在下一次启动时如果配置中心不可用的时候，且开启了允许读取临时文件数据的开关，那么可以先用这部分临时的配置信息来启动，提高服务的可用性
-
 
 
 在Spring中注入配置属性的流程
